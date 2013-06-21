@@ -1,0 +1,4 @@
+moduleName=groovy-crypto-extensions
+moduleVersion=0.1
+extensionClasses=ca.redtoad.groovy.extensions.crypto.CryptoExtensionMethods
+staticExtensionClasses=

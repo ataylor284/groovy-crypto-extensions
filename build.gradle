@@ -1,6 +1,10 @@
 apply plugin: 'groovy'
+apply plugin: 'nexus'
 
 version = '0.1'
+
+sourceCompatibility=1.6
+targetCompatibility=1.6
 
 repositories {
   mavenCentral()
@@ -9,4 +13,54 @@ repositories {
 dependencies {
   compile 'org.codehaus.groovy:groovy-all:2.1.5'
   testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
+}
+
+// maven/nexus configuration
+
+group = 'ca.redtoad'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'org.gradle.api.plugins:gradle-nexus-plugin:0.2'
+    }
+}
+
+artifacts {
+  archives jar
+  archives sourcesJar
+}
+
+modifyPom {
+    project {
+        name 'Groovy Crypto Extensions'
+        description 'A groovy extension that make crypto groovier.'
+        url 'https://github.com/ataylor284/groovy-crypto-extensions'
+        inceptionYear '2013'
+
+        scm {
+            url 'https://github.com/ataylor284/groovy-crypto-extensions'
+            connection 'scm:https://github.com/ataylor284/groovy-crypto-extensions.git'
+            developerConnection 'scm:https://github.com/ataylor284/groovy-crypto-extensions.git'
+        }
+
+        licenses {
+            license {
+                name 'The Apache Software License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
+            }
+        }
+
+        developers {
+            developer {
+                id 'ataylor284'
+                name 'Andrew Taylor'
+                email 'ataylor@redtoad.ca'
+            }
+        }
+    }
 }

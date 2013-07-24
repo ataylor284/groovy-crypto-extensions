@@ -31,8 +31,17 @@ The digest of an input stream can also be generated:
     assert sha1 == 'eda9522cc90f16c06dd51739e2d02daafad0b36f'
 
 
-Symmetric Encryption and Decryption
------------------------------------
+Generating Message Authentication Codes (MACs)
+----------------------------------------------
+
+Byte arrays and input streams have been augumented with methods
+`mac()` and , `hmac()`.  Like the digest methods, they take the name
+of an algorithm as an argument but they also require a key.  To get a
+SHA256 HMAC of a string:
+
+    key = "password".toKey(length: 32)
+    hmac = "some plaintext".bytes.hmac(key: key).encodeHex()
+    ===> 29e17e11f251d058eed0ac05933be6dafad4afca9d30c5a1783a83185af74937
 
 Symmetric Encryption and Decryption
 -----------------------------------

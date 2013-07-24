@@ -8,6 +8,10 @@ import javax.crypto.*
 @CompileStatic
 class CryptoExtensionMethods {
 
+    static final Map DEFAULT_MAC_PARAMS = [
+        algorithm: 'HmacSHA256'
+    ]
+
     static final Map DEFAULT_PBE_PARAMS = [
         salt: 'e51fddac390e'.bytes,
         iterations: 10000,
@@ -50,6 +54,35 @@ class CryptoExtensionMethods {
 
     static byte[] sha1(InputStream self) {
         digest(self, 'SHA')
+    }
+
+    static byte[] mac(byte[] self, Map params) {
+        mac(new ByteArrayInputStream(self), params)
+    }
+
+    static byte[] mac(InputStream self, Map params) {
+        Map mergedParams = [:]
+        mergedParams.putAll(DEFAULT_MAC_PARAMS)
+        mergedParams.putAll(params)
+        final mac = Mac.getInstance((String) mergedParams.algorithm)
+        mac.init((SecretKeySpec) mergedParams.key)
+        self.eachByte(8 * 1024) { byte[] buffer, int len -> 
+            mac.update(buffer, 0, len)
+        }
+        mac.doFinal()
+    }
+
+    static byte[] hmac(byte[] self, Map params) {
+        hmac(new ByteArrayInputStream(self), params)
+    }
+
+    static byte[] hmac(InputStream self, Map params) {
+        Map mergedParams = [:]
+        mergedParams.putAll(params)
+        if ('algorithm' in params) {
+            mergedParams.algorithm = "Hmac$params.algorithm"
+        }
+        mac(self, mergedParams)
     }
 
     static SecretKeySpec toKey(String self, Map params = [:]) {

@@ -7,6 +7,12 @@ The Java API for creating message digests and ciphers for symmetric
 encryption are complex difficult to get started with.  This groovy
 extension provides simple interfaces that make crypto groovier.
 
+The main goals are:
+
+* A simple interface
+* Secure choices for defaults
+* Interoperate easily with other crypto libraries
+
 
 Generating Message Digests
 --------------------------
@@ -27,7 +33,7 @@ The digest of an input stream can also be generated:
 
     // confirm the sha1 of groovy-all artifact from http://search.maven.org/#artifactdetails|org.codehaus.groovy|groovy-all|2.1.5|jar
     def jarLocation = 'http://search.maven.org/remotecontent?filepath=org/codehaus/groovy/groovy-all/2.1.5/groovy-all-2.1.5.jar'
-    def sha1 = new URL(jarLocation).openConnection().inputStream.sha1().encodeHex()
+    def sha1 = new URL(jarLocation).openConnection().inputStream.sha1().encodeHex().toString()
     assert sha1 == 'eda9522cc90f16c06dd51739e2d02daafad0b36f'
 
 
@@ -43,52 +49,13 @@ SHA256 HMAC of a string:
     hmac = "some plaintext".bytes.hmac(key: key).encodeHex()
     ===> 29e17e11f251d058eed0ac05933be6dafad4afca9d30c5a1783a83185af74937
 
-Symmetric Encryption and Decryption
------------------------------------
+Keys
+----
 
-Byte arrays and input streams have also been augmented with
-`encrypt()` and `decrypt()`.  In addition, `toKey()` has been added to
-byte arrays and Strings.
-
-Both of these methods take a map of parameters that must include at
-minimum, a key.  Some examples:
-
-    key = "password".toKey()
-    ciphertext = "some plaintext".padRight(16).bytes.encrypt(key: key)
-    new String(ciphertext.decrypt(key: key)).trim()
-    ===> some plaintext
-
-The default is AES/ECB/NoPadding, so the plaintext needs to be padded.
-Another example, using padding and chained blocks with an
-initialization vector:
-
-    key = "password".toKey()
-    ciphertext = "some plaintext".bytes.encrypt(key: key, padding: 'PKCS5Padding', mode: 'CBC', initializationVector: [0] * 16)
-    new String(ciphertext.decrypt(key: key, padding: 'PKCS5Padding', mode: 'CBC', initializationVector: [0] * 16))
-    ===> some plaintext
-
-All the algorithms supported by
-[JCE](http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#Cipher)
-are supported:
-
-    key = "password".toKey(algorithm: 'DES', length: 8)
-    ciphertext = "some plaintext".bytes.encrypt(key: key, algorithm: 'DES', padding: 'PKCS5Padding')
-    new String(ciphertext.decrypt(key: key, algorithm: 'DES', padding: 'PKCS5Padding'))
-    ===> some plaintext
-    
-Use InputStream an input stream with an out parameter to encrypt a stream:
-
-    key = "password".toKey()
-    out = new FileOutputStream('README.md.encrypted')
-    ciphertext = new File('README.md').encrypt(key: key, padding: 'PKCS5Padding', mode: 'CBC', initializationVector: [0] * 16, out: out)
-    
-
-Additional Notes on Keys
-------------------------
-
-The byte array version of `toKey()` requires the byte array to be the
-exact size of the key.  For example, AES-128 requires a 16 byte (128
-bit) key:
+Method `toKey()` has been added to byte arrays and Strings.  The byte
+array version of `toKey()` requires the byte array to be the exact
+size of the key.  For example, AES-128 requires a 16 byte (128 bit)
+key:
 
     key = '0123456789012345'.bytes.toKey()
 
@@ -98,3 +65,50 @@ a String of any size.  The salt value should be overriden:
 
     key = 'correct horse battery staple'.toKey(salt: 'TrOub4dor&3'.bytes)
 
+
+Symmetric Encryption and Decryption
+-----------------------------------
+
+Byte arrays and input streams have also been augmented with
+`encrypt()` and `decrypt()`.
+
+Both of these methods take a map of parameters that must include at
+minimum, a key.  Some examples:
+
+    key = "password".toKey()
+    ciphertext = "some plaintext".bytes.encrypt(key: key)
+    new String(ciphertext.decrypt(key: key))
+    ===> some plaintext
+
+The default is AES/CBC/PKCS5Padding, with a randomly generated
+initalization vector.  The initalization vector is prepended to the
+output cipher text; to set the initialization vector manually, add
+`prependIvToCipherText: true` and `initializationVector: myIV` to the
+parameters:
+
+    key = "password".toKey()
+    ciphertext = "some plaintext".bytes.encrypt(key: key, initializationVector: [0] * 16, prependIvToCipherText: false) // don't actually use this IV!
+    new String(ciphertext.decrypt(key: key, initializationVector: [0] * 16, prependIvToCipherText: false))
+    ===> some plaintext
+
+Another example, padding manually using ECB mode:
+
+    key = "password".toKey()
+    ciphertext = "some plaintext".padRight(16).bytes.encrypt(key: key, padding: 'NoPadding', mode: 'ECB')
+    new String(ciphertext.decrypt(key: key, padding: 'NoPadding', mode: 'ECB')).trim()
+    ===> some plaintext
+
+All the algorithms supported by
+[JCE](http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#Cipher)
+are supported:
+
+    key = "password".toKey(algorithm: 'DES', length: 8)
+    ciphertext = "some plaintext".bytes.encrypt(key: key, algorithm: 'DES')
+    new String(ciphertext.decrypt(key: key, algorithm: 'DES'))
+    ===> some plaintext
+    
+Use InputStream an input stream with an out parameter to encrypt a stream:
+
+    key = "password".toKey()
+    out = new FileOutputStream('README.md.encrypted')
+    new FileInputStream('README.md').encrypt(key: key, out: out)

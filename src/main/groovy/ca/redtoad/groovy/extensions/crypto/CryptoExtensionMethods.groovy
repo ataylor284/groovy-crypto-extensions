@@ -21,9 +21,10 @@ class CryptoExtensionMethods {
 
     static final Map DEFAULT_CIPHER_PARAMS = [
         algorithm: 'AES',
-        mode: 'ECB',
-        padding: 'NoPadding',
-        initializationVector: null
+        mode: 'CBC',
+        padding: 'PKCS5Padding',
+        initializationVector: null,
+        prependIvToCipherText: true
     ]
 
     static byte[] digest(byte[] self, String name) {
@@ -111,6 +112,10 @@ class CryptoExtensionMethods {
         byte[] iv = (byte[]) mergedParams.initializationVector
         final cipher = Cipher.getInstance(transformation)
         cipher.init(Cipher.ENCRYPT_MODE, (SecretKeySpec) mergedParams.key, iv ? new IvParameterSpec(iv) : null)
+        if (mergedParams.prependIvToCipherText && 
+            mergedParams.mode != 'ECB') {
+            out << cipher.getIV()
+        }
         self.eachByte(8 * 1024) { byte[] buffer, int len -> 
             out << cipher.update(buffer, 0, len)
         }
@@ -131,6 +136,11 @@ class CryptoExtensionMethods {
         String transformation = [mergedParams.algorithm, mergedParams.mode, mergedParams.padding].join('/')
         byte[] iv = (byte[]) mergedParams.initializationVector
         final cipher = Cipher.getInstance(transformation)
+        if (mergedParams.prependIvToCipherText &&
+            mergedParams.mode != 'ECB') {
+            iv = new byte[cipher.blockSize]
+            self.read(iv)
+        }
         cipher.init(Cipher.DECRYPT_MODE, (SecretKeySpec) mergedParams.key, iv ? new IvParameterSpec(iv) : null)
         self.eachByte(8 * 1024) { byte[] buffer, int len -> 
             out << cipher.update(buffer, 0, len)

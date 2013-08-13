@@ -14,6 +14,7 @@ The main goals are:
 * Interoperate easily with other crypto libraries
 
 
+* Table of Contents
 {:toc}
 
 

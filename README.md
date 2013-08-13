@@ -14,6 +14,9 @@ The main goals are:
 * Interoperate easily with other crypto libraries
 
 
+{:toc}
+
+
 Generating Message Digests
 --------------------------
 
